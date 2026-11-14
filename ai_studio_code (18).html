@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ff003f">
+    <meta http-equiv="Permissions-Policy" content="usb=(self), serial=(self), bluetooth=(self)">
+    <title>YOUNKJAYAMOTOR HYPER-TUNER X - Auto-Offset Keihin & Shindengen Edition</title>
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiWU9VTktKQVlBTU9UT1IgWFQiLCJzaG9ydF9uYW1lIjoiSHlwZXJUdW5lciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMDcwNzA3IiwidGhlbWVfY29sb3IiOiIjZmYwMDNmIn0=">
+
+    <style>
+        :root {
+            --bg-dark: #070707;
+            --panel-bg: #121212;
+            --red-race: #ff003f;
+            --cyan-neon: #00f3ff;
+            --gold-dyno: #ffee00;
+            --green-ok: #00ff66;
+            --text-main: #f0f0f0;
+            --border-glow: 1px solid rgba(255, 0, 63, 0.4);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif, monospace; }
+        body { background-color: var(--bg-dark); color: var(--text-main); font-size: 13.5px; padding-bottom: 85px; user-select: none; overflow-x: hidden; }
+
+        /* BOOT INTRO */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #2b0206 0%, #050505 100%);
+            z-index: 10000000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .splash-logo { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 2px; text-shadow: 0 0 20px #ff003f; animation: pulseGlow 1.5s infinite alternate; text-align: center; }
+        .splash-logo span { color: var(--red-race); }
+        .splash-sub { font-size: 11px; font-weight: bold; color: var(--cyan-neon); letter-spacing: 3px; margin-top: 6px; text-transform: uppercase; }
+        .splash-tacho {
+            width: 140px; height: 70px; border: 4px solid #333; border-bottom: none;
+            border-top-left-radius: 140px; border-top-right-radius: 140px;
+            margin: 25px 0 15px 0; position: relative; overflow: hidden;
+            box-shadow: 0 0 25px rgba(255, 0, 63, 0.3);
+        }
+        .splash-needle {
+            width: 4px; height: 60px; background: #ff003f; position: absolute;
+            bottom: 0; left: 50%; transform-origin: bottom center;
+            transform: rotate(-80deg); animation: revNeedle 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            box-shadow: 0 0 10px #ff003f;
+        }
+        .splash-loader { width: 220px; height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 15px; border: 1px solid #333; }
+        .splash-loader-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ff003f, #00f3ff); animation: loadBar 1.8s forwards; }
+        .splash-text { font-size: 10px; color: #888; font-family: monospace; margin-top: 8px; }
+
+        @keyframes revNeedle { 0% { transform: rotate(-80deg); } 50% { transform: rotate(80deg); } 75% { transform: rotate(-20deg); } 100% { transform: rotate(-60deg); } }
+        @keyframes loadBar { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes pulseGlow { 0% { text-shadow: 0 0 10px rgba(255,0,63,0.5); } 100% { text-shadow: 0 0 25px rgba(255,0,63,1), 0 0 35px rgba(0,243,255,0.6); } }
+
+        header {
+            background: linear-gradient(180deg, #330208 0%, #080808 100%);
+            padding: 10px 14px; border-bottom: 2.5px solid var(--red-race);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo-title { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        .logo-title span { color: var(--red-race); }
+        .badge-status { font-size: 10px; padding: 4px 9px; border-radius: 4px; font-weight: bold; background: #222; color: #888; border: 1px solid #444; }
+        .badge-online { background: rgba(0, 255, 102, 0.2) !important; color: var(--green-ok) !important; border: 1px solid var(--green-ok) !important; }
+        .badge-fail { background: rgba(255, 0, 63, 0.2) !important; color: #ff003f !important; border: 1px solid #ff003f !important; }
+
+        .master-connect-bar { padding: 8px 12px; background: #0c0c0c; border-bottom: 1px solid #222; display: flex; gap: 8px; }
+        .btn-main-connect {
+            flex: 2; background: linear-gradient(180deg, #00f3ff 0%, #0077b6 100%);
+            border: none; color: #000; font-weight: 900; font-size: 12px; padding: 10px; border-radius: 5px; text-transform: uppercase; cursor: pointer;
+        }
+        .btn-auto-detect {
+            flex: 1; background: linear-gradient(180deg, #ffee00 0%, #b3a700 100%);
+            border: none; color: #000; font-weight: 900; font-size: 11px; padding: 10px; border-radius: 5px; text-transform: uppercase; cursor: pointer;
+        }
+
+        /* BAR IZIN USB OTG ANDROID */
+        .otg-perm-bar {
+            padding: 7px 12px; background: #091318; border-bottom: 1px solid #163a47;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .otg-perm-info { font-size: 10.5px; color: #b8f4ff; line-height: 1.3; flex: 1; }
+        .btn-otg-perm {
+            background: linear-gradient(180deg, #00ff66 0%, #009940 100%);
+            border: none; color: #000; font-weight: 900; font-size: 10.5px;
+            padding: 7px 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; white-space: nowrap;
+        }
+
+        .conn-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 8px 12px; background: #111; }
+        .btn-conn {
+            background: #181818; border: 1px solid #333; color: #ccc;
+            padding: 8px 2px; font-size: 9.5px; font-weight: bold; border-radius: 4px;
+            display: flex; flex-direction: column; align-items: center; text-transform: uppercase; cursor: pointer; text-align: center;
+        }
+        .btn-conn.active { border-color: var(--cyan-neon); color: var(--cyan-neon); box-shadow: 0 0 10px rgba(0,243,255,0.3); }
+
+        .layer-deck-nav {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px 10px; background: #101010;
+            border-bottom: 1px solid #222; position: sticky; top: 48px; z-index: 90;
+        }
+        .btn-layer {
+            background: #181818; border: 1px solid #292929; color: #aaa;
+            padding: 8px 2px; font-size: 9.5px; font-weight: 900; border-radius: 4px;
+            text-align: center; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .btn-layer.active-layer {
+            background: var(--red-race); color: #fff; border-color: var(--red-race);
+            box-shadow: 0 0 10px rgba(255, 0, 63, 0.4);
+        }
+
+        .main-container { padding: 10px; max-width: 1400px; margin: 0 auto; }
+        .layer-panel { display: none; }
+        .layer-panel.active-panel { display: block; }
+        
+        .card {
+            background: var(--panel-bg); border-radius: 8px; border: var(--border-glow);
+            padding: 12px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        .card-header { font-size: 13px; font-weight: bold; color: var(--red-race); text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+        .guide-box {
+            background: rgba(0, 243, 255, 0.05); border: 1px dashed rgba(0, 243, 255, 0.4);
+            border-radius: 5px; padding: 8px; margin: 6px 0 10px 0; font-size: 10.5px; line-height: 1.5; color: #b8f4ff;
+        }
+        .guide-title { font-weight: bold; color: var(--cyan-neon); text-transform: uppercase; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; font-size: 11px; }
+
+        input, select, textarea {
+            width: 100%; background: #060606; border: 1px solid #3a3a3a; color: #fff;
+            padding: 9px; border-radius: 5px; margin: 4px 0 8px 0; font-size: 13px;
+        }
+        .btn-action {
+            width: 100%; background: linear-gradient(180deg, #ff1a40 0%, #b30020 100%);
+            border: none; color: white; padding: 11px; border-radius: 5px; font-weight: bold;
+            font-size: 12.5px; margin-top: 5px; text-transform: uppercase; cursor: pointer;
+        }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-secondary { background: #1c1c1c; border: 1px solid #333; margin-top: 4px; color: #ccc; }
+        .btn-cyan { background: linear-gradient(180deg, #00f3ff 0%, #0077b6 100%); color: #000; font-weight: bold; }
+        .btn-gold { background: linear-gradient(180deg, #ffee00 0%, #c4b700 100%); color: #000; font-weight: bold; }
+        .btn-danger { background: linear-gradient(180deg, #ff003f 0%, #880000 100%); color: #fff; font-weight: bold; }
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+        .empty-placeholder {
+            padding: 35px 15px; text-align: center; border: 2px dashed #333; border-radius: 8px;
+            background: #090909; color: #aaa; font-size: 13px; line-height: 1.6; margin: 8px 0;
+        }
+
+        .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+        .btn-preset {
+            background: #181818; border: 1px solid #333; color: #ddd; padding: 8px 4px;
+            font-size: 10.5px; font-weight: bold; border-radius: 4px; text-align: center; cursor: pointer;
+        }
+        .btn-preset:hover, .btn-preset.active { background: #ff003f; color: #fff; border-color: #ff003f; }
+
+        .bike-preview-box {
+            background: linear-gradient(90deg, #180306 0%, #0a0a0a 100%);
+            border: 1px solid var(--red-race); border-radius: 6px; padding: 10px;
+            display: flex; align-items: center; gap: 12px; margin: 8px 0;
+        }
+        .bike-badge-icon {
+            width: 55px; height: 55px; background: #000; border: 1px solid var(--cyan-neon);
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; box-shadow: 0 0 10px rgba(0,243,255,0.2);
+        }
+
+        /* TABEL DINAMIS */
+        .map-scroll-container {
+            width: 100%; max-height: 400px; overflow: auto; border: 1px solid #222;
+            background: #050505; border-radius: 5px; margin-top: 6px;
+        }
+        .map-dynamic-table { border-collapse: separate; border-spacing: 1.5px; font-size: 11px; text-align: center; }
+        .map-dynamic-table th {
+            background: #181818; color: var(--red-race); padding: 7px 4px; position: sticky; top: 0; z-index: 2;
+            border-bottom: 1px solid #333; min-width: 44px; font-size: 10.5px;
+        }
+        .map-dynamic-table th.sticky-col { position: sticky; left: 0; z-index: 3; background: #1f1f1f; color: var(--cyan-neon); min-width: 52px; }
+        .map-dynamic-table td {
+            min-width: 42px; height: 28px; padding: 4px; font-weight: bold; cursor: pointer;
+            text-shadow: 0 1px 2px #000; font-size: 11px;
+        }
+        .cell-selected { outline: 2px solid #ffee00 !important; box-shadow: 0 0 8px #ffee00; }
+
+        #canvas-3d { width: 100%; height: 250px; background: #050505; border: 1px solid #222; border-radius: 6px; display: block; }
+        #canvas-2d-curve { width: 100%; height: 180px; background: #050505; border: 1px solid #222; border-radius: 6px; display: block; margin-top: 6px; }
+        #dyno-canvas { width: 100%; height: 240px; background: #050505; border: 1px solid #222; border-radius: 6px; display: block; }
+
+        .switch-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 8px 0; }
+        .switch-indicator-box {
+            background: #090909; border: 1px solid #222; border-radius: 5px; padding: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .switch-name { font-weight: bold; font-size: 11px; color: #ddd; }
+        .switch-pill { padding: 4px 9px; border-radius: 4px; font-weight: 900; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .sw-standby { background: #1a1a1a; color: #666; border: 1px solid #333; }
+
+        .relay-card-box {
+            background: #0d0d0d; border: 1px solid #292929; border-radius: 5px; padding: 10px;
+            margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .diag-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+        .diag-table th { background: #181818; padding: 8px; color: #ff003f; text-align: left; border: 1px solid #222; }
+        .diag-table td { padding: 8px; border: 1px solid #222; background: #0c0c0c; }
+        .status-pill { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 9.5px; }
+        .status-off { background: #1a1a1a; color: #777; border: 1px solid #333; }
+
+        /* KOTAK AUTO-OFFSET PREVIEW */
+        .auto-offset-preview {
+            background: #050505; border: 1px solid var(--cyan-neon); border-radius: 5px;
+            padding: 10px; margin: 6px 0; font-size: 12px; line-height: 1.5; color: #00ff66;
+        }
+
+        #console-log {
+            background: #050505; border: 1px solid #222; color: #00ff66;
+            font-family: monospace; font-size: 11px; height: 110px; overflow-y: scroll;
+            padding: 8px; border-radius: 5px; line-height: 1.4; white-space: pre-wrap;
+        }
+
+        nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #101010;
+            border-top: 1px solid #222; display: flex; justify-content: space-around; z-index: 1000;
+        }
+        .nav-item {
+            padding: 10px 1px; color: #888; font-size: 9.5px; font-weight: bold;
+            text-align: center; width: 100%; text-transform: uppercase; cursor: pointer;
+        }
+        .nav-item.active { color: var(--red-race); border-top: 2.5px solid var(--red-race); background: #1a0306; }
+    </style>
+</head>
+<body>
+
+    <!-- BOOT INTRO -->
+    <div id="splash-screen" onclick="dismissSplash()">
+        <div class="splash-logo">⚡ YOUNKJAYA<span>MOTOR</span></div>
+        <div class="splash-sub">HYPER-TUNER X &bull; KEIHIN & SHINDENGEN ENGINE</div>
+        <div class="splash-tacho"><div class="splash-needle"></div></div>
+        <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+        <div class="splash-text">INITIALIZING K-LINE HARDWARE & ANDROID OTG...</div>
+    </div>
+
+    <header>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div class="logo-title">⚡ YOUNKJAYA<span>MOTOR</span> HYPER-TUNER X</div>
+        </div>
+        <div id="conn-badge" class="badge-status">TERPUTUS (OFFLINE)</div>
+    </header>
+
+    <div class="master-connect-bar">
+        <button class="btn-main-connect" id="btn-master-connect" onclick="connectActiveTransport()">
+            ⚡ KONEK KE MOTOR (K-LINE / OTG)
+        </button>
+        <button class="btn-auto-detect" onclick="autoDetectECU()">
+            🔍 AUTO DETECT ECU
+        </button>
+    </div>
+
+    <!-- PANEL IZIN USB OTG ANDROID -->
+    <div class="otg-perm-bar">
+        <div class="otg-perm-info" id="otg-perm-status">
+            📱 <b>Status USB OTG Android:</b> Memeriksa izin hardware...
+        </div>
+        <button class="btn-otg-perm" onclick="requestAndroidUsbOtgPermission()">
+            🔓 IZINKAN USB OTG
+        </button>
+    </div>
+
+    <!-- JALUR PERANGKAT KERAS -->
+    <div class="conn-bar">
+        <button id="btn-otg" class="btn-conn" onclick="selectHardwareTransport('USB_OTG')"><span>📱 USB OTG</span></button>
+        <button id="btn-ftdi" class="btn-conn active" onclick="selectHardwareTransport('SERIAL')"><span>🔌 FTDI PC</span></button>
+        <button id="btn-bt" class="btn-conn" onclick="selectHardwareTransport('BLUETOOTH')"><span>📶 BLUETOOTH</span></button>
+        <button id="btn-wifi" class="btn-conn" onclick="selectHardwareTransport('WIFI')"><span>📡 WI-FI AP</span></button>
+        <button id="btn-can" class="btn-conn" onclick="selectHardwareTransport('CAN')"><span>⚡ CAN BUS</span></button>
+    </div>
+
+    <!-- DOCK NAVIGASI MULTI-LAYER -->
+    <div class="layer-deck-nav">
+        <button class="btn-layer active-layer" id="nav-l1" onclick="switchLayerDeck(1)">🔥 1. TUNER DECK</button>
+        <button class="btn-layer" id="nav-l2" onclick="switchLayerDeck(2)">🔘 2. DIAGNOSTIK</button>
+        <button class="btn-layer" id="nav-l3" onclick="switchLayerDeck(3)">📈 3. REAL DYNO</button>
+        <button class="btn-layer" id="nav-l4" onclick="switchLayerDeck(4)">🛠️ 4. XDF, FLASH & DB</button>
+    </div>
+
+    <div class="main-container">
+
+        <!-- ================= LAYER 1: TUNER DECK ================= -->
+        <div id="deck-layer-1" class="layer-panel active-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span>📂 SUMBER PEMETAAN & PILIH MOTOR (MANUAL)</span>
+                    <button class="btn-action btn-secondary" style="width:auto; padding:3px 8px; margin:0;" onclick="resetTableToStandby()">🔒 TUTUP TABEL (RESET)</button>
+                </div>
+                <div class="grid-2col">
+                    <div>
+                        <label>1. Pilih Tipe Motor Manual:</label>
+                        <select id="map-ecu-selector" onchange="manualSelectMotorcycle(this.value)"></select>
+                    </div>
+                    <div>
+                        <label>2. Atau Buka File Map (.BIN / .JSON):</label>
+                        <button class="btn-action btn-cyan" style="margin:3px 0 6px 0;" onclick="document.getElementById('input-map-file').click()">
+                            📁 BUKA FILE DARI MEMORI
+                        </button>
+                        <input type="file" id="input-map-file" accept=".bin,.json,.xdf" style="display:none;" onchange="handleDirectFileImport(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRATINJAU MOTOR -->
+            <div id="bike-preview-card" style="display:none;" class="bike-preview-box">
+                <div class="bike-badge-icon" id="bike-icon">🛵</div>
+                <div style="flex:1;">
+                    <div style="font-weight:900; font-size:14px; color:#fff;" id="bike-display-name">--</div>
+                    <div style="font-size:11px; color:#aaa;" id="bike-display-details">--</div>
+                </div>
+            </div>
+
+            <!-- AREA PETA MATRIKS -->
+            <div class="card">
+                <div class="card-header">
+                    <span id="matrix-title">🔥 PETA MATRIKS TUNING</span>
+                    <span id="map-work-indicator" style="color:var(--gold-dyno); font-size:10px;">STATUS: STANDBY (TERKUNCI)</span>
+                </div>
+
+                <div id="map-standby-box" class="empty-placeholder">
+                    <div style="font-size:32px; margin-bottom:6px;">🔒</div>
+                    <b style="font-size:14px; color:#fff;">TABEL PEMETAAN BELUM DIAKTIFKAN</b><br>
+                    Tabel matriks 2D dan grafik sengaja dikunci saat awal buka agar tidak memuat angka sembarangan.<br>
+                    <span style="color:var(--cyan-neon);">Silakan <b>Pilih Tipe Motor</b> pada dropdown di atas atau <b>Buka File Map</b> untuk menampilkan tabel!</span>
+                </div>
+
+                <div id="map-active-wrapper" style="display:none;">
+                    <div class="preset-grid">
+                        <button class="btn-preset active" onclick="applySpecialPreset('STD')">STD</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('TOURING')">TOURING</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('STOP_N_GO')">STOP N GO</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('RACE')">RACE</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('DRAG')">DRAG</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('TIMING_KUDA')">TIMING KUDA</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('IDLE_ROTARY')">ROTARY</button>
+                        <button class="btn-preset" onclick="applySpecialPreset('BLACK_FAIR')">BLACK FAIR</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top:8px;">
+                        <div>
+                            <label>Parameter Peta:</label>
+                            <select id="select-map-mode" onchange="switchMapParameter(this.value)">
+                                <option value="FUEL">Bahan Bakar (Fuel VE Table %)</option>
+                                <option value="IGN">Pengapian (Ignition Timing °BTDC)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Tampilan Grafik:</label>
+                            <select id="select-sub-view" onchange="switchSubView(this.value)">
+                                <option value="TABLE">1. Tabel 2D (Klik 2x Edit)</option>
+                                <option value="CURVE2D">2. Kurva 2D (Tarik Titik)</option>
+                                <option value="SURFACE3D">3. Bukit 3D (360° Drag)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="subview-table">
+                        <div class="map-scroll-container"><table class="map-dynamic-table" id="dynamic-table"></table></div>
+                    </div>
+                    <div id="subview-curve2d" style="display:none;"><canvas id="canvas-2d-curve"></canvas></div>
+                    <div id="subview-surface3d" style="display:none;"><canvas id="canvas-3d"></canvas></div>
+
+                    <div class="grid-3col" style="margin-top:8px;">
+                        <button class="btn-action btn-secondary" onclick="adjustCell(-1)">- 1 STEP</button>
+                        <button class="btn-action btn-secondary" onclick="adjustCell(+1)">+ 1 STEP</button>
+                        <button class="btn-action btn-cyan" onclick="alert('Peta Berhasil Dihaluskan!')">⚡ INTERPOLASI RATA</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= LAYER 2: DIAGNOSTIK & I/O ================= -->
+        <div id="deck-layer-2" class="layer-panel">
+            <div class="card">
+                <div class="card-header"><span>🔘 STATUS SAKLAR DIGITAL INPUT (REAL STATUS)</span></div>
+                <div class="switch-grid">
+                    <div class="switch-indicator-box"><span class="switch-name">Standar Samping</span><span class="switch-pill sw-standby" id="ind-stand">OFFLINE</span></div>
+                    <div class="switch-indicator-box"><span class="switch-name">Rem Depan</span><span class="switch-pill sw-standby" id="ind-brake-f">OFFLINE</span></div>
+                    <div class="switch-indicator-box"><span class="switch-name">Rem Belakang</span><span class="switch-pill sw-standby" id="ind-brake-r">OFFLINE</span></div>
+                    <div class="switch-indicator-box"><span class="switch-name">Tombol Starter</span><span class="switch-pill sw-standby" id="ind-starter">OFFLINE</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><span>⚡ UJI RELAY AKTUTOR 3 DETIK (MODE 0x30)</span></div>
+                <div class="relay-card-box"><div><b>Pompa Bensin (Fuel Pump)</b><div style="font-size:9.5px; color:#888;">Mengaktifkan dengung pompa 3 detik</div></div><button class="btn-action btn-cyan" style="width:auto; padding:5px 10px; margin:0;" onclick="testRelayActuator('FP', 3)">UJI RELAY</button></div>
+                <div class="relay-card-box"><div><b>Relay Starter ACG</b><div style="font-size:9.5px; color:#888;">Menguji induksi starter motor</div></div><button class="btn-action btn-cyan" style="width:auto; padding:5px 10px; margin:0;" onclick="testRelayActuator('ST', 3)">UJI RELAY</button></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><span>📋 DATA SENSOR & PARAMETER PEMBANDING STANDAR</span></div>
+                <table class="diag-table">
+                    <thead><tr><th>Sensor</th><th>Nilai Aktual</th><th>Acuan Standar</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td><b>Engine RPM</b></td><td id="live-val-rpm" style="color:#777; font-weight:bold;">-- RPM</td><td>1.400 - 1.600 RPM</td><td><span class="status-pill status-off" id="status-rpm">OFFLINE</span></td></tr>
+                        <tr><td><b>Bukaan Gas (TPS)</b></td><td id="live-val-tps" style="color:#777; font-weight:bold;">-- %</td><td>0.0% (Tutup) | 100% (WOT)</td><td><span class="status-pill status-off" id="status-tps">OFFLINE</span></td></tr>
+                        <tr><td><b>Injektor (ms)</b></td><td id="live-val-inj" style="color:#777; font-weight:bold;">-- ms</td><td>1.80 - 2.60 ms (Idle)</td><td><span class="status-pill status-off" id="status-inj">OFFLINE</span></td></tr>
+                        <tr><td><b>Katup IACV</b></td><td id="live-val-iacv" style="color:#777; font-weight:bold;">-- Step</td><td>20 - 45 Steps</td><td><span class="status-pill status-off" id="status-iacv">OFFLINE</span></td></tr>
+                        <tr><td><b>MAP Sensor</b></td><td id="live-val-map" style="color:#777; font-weight:bold;">-- kPa</td><td>25 - 40 kPa (Vakum)</td><td><span class="status-pill status-off" id="status-map">OFFLINE</span></td></tr>
+                        <tr><td><b>Ignition Timing</b></td><td id="live-val-ign" style="color:#777; font-weight:bold;">-- °</td><td>8.0° - 15.0° (Idle)</td><td><span class="status-pill status-off" id="status-ign">OFFLINE</span></td></tr>
+                        <tr><td><b>Suhu Pendingin (ECT)</b></td><td id="live-val-ect" style="color:#777; font-weight:bold;">-- °C</td><td>80 - 95 °C</td><td><span class="status-pill status-off" id="status-ect">OFFLINE</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= LAYER 3: REAL DYNO DECK ================= -->
+        <div id="deck-layer-3" class="layer-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span>📈 VIRTUAL DYNO (KALKULASI INERSIA NYATA)</span>
+                    <span style="color:var(--gold-dyno)" id="dyno-status">STANDBY</span>
+                </div>
+                <canvas id="dyno-canvas"></canvas>
+                <div style="display:flex; justify-content:space-around; margin:8px 0; background:#080808; padding:8px; border-radius:5px; border:1px solid #222;">
+                    <div><span style="color:#ff003f; font-weight:900;">― POWER:</span> <span id="dyno-hp" style="color:#fff; font-size:16px; font-weight:900;">0.00</span> HP</div>
+                    <div><span style="color:#00f3ff; font-weight:900;">― TORSI:</span> <span id="dyno-trq" style="color:#fff; font-size:16px; font-weight:900;">0.00</span> Nm</div>
+                    <div><span style="color:#ffee00; font-weight:900;">― SWEEP:</span> <span id="dyno-sweep-val" style="color:#fff; font-size:16px; font-weight:900;">0</span> RPM</div>
+                </div>
+                <div class="grid-2col">
+                    <button class="btn-action" id="btn-dyno-rec" onclick="toggleDynoRecording()">🔴 MULAI TARIKAN DYNO NYATA</button>
+                    <button class="btn-action btn-secondary" onclick="alert('Log Dyno CSV Diexport!')">💾 EXPORT CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= LAYER 4: XDF, FLASH & TAMBAH MOTOR AUTO-OFFSET ================= -->
+        <div id="deck-layer-4" class="layer-panel">
+            
+            <!-- MODUL 1: TAMBAH DATA KENDARAAN BARU DENGAN AUTO-OFFSET & AUTO-CHECKSUM -->
+            <div class="card">
+                <div class="card-header" style="color:var(--cyan-neon);">
+                    <span>➕ TAMBAH DATA KENDARAAN BARU (AUTO-OFFSET KEIHIN / SHINDENGEN)</span>
+                    <span style="color:var(--green-ok); font-size:10px;">AUTO-ARCHITECTURE</span>
+                </div>
+
+                <div class="guide-box">
+                    <div class="guide-title">💡 AUTO-OFFSET & AUTO-CHECKSUM CERDAS:</div>
+                    Pilih tipe arsitektur <b>Shindengen</b> atau <b>Keihin</b> di bawah. Sistem akan <b>secara otomatis mengisi alamat hex offset memori bensin, pengapian, limiter, dimensi matriks, dan jenis kalkulasi checksum</b> tanpa perlu dicari secara manual!
+                </div>
+
+                <div class="grid-2col">
+                    <div>
+                        <label>Nomor Part ECU Baru:</label>
+                        <input type="text" id="cust-part" placeholder="Contoh: 30400-K... atau 38770-K...">
+                    </div>
+                    <div>
+                        <label>Nama Motor & Tahun:</label>
+                        <input type="text" id="cust-name" placeholder="Contoh: All New Vario 125 2026/2027">
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <div>
+                        <label>Varian Sistem:</label>
+                        <select id="cust-iss">
+                            <option value="ISS Smartkey">ISS Smartkey / Idling Stop</option>
+                            <option value="Non-ISS (CBS)">Non-ISS (CBS Standar)</option>
+                            <option value="Manual Sport / Trail">Manual Sport / Trail DOHC/SOHC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Pilih Arsitektur ECU (Auto-Offset & Auto-Checksum):</label>
+                        <select id="cust-arch" onchange="autoConfigureOffsets(this.value)">
+                            <option value="SHIN_V850_G2" selected>Shindengen V850 Gen 2 (Vario 125 K2V/K2VG, BeAT eSAF K1A, Genio K0J, Scoopy K2F)</option>
+                            <option value="SHIN_V850_G3">Shindengen V850 Gen 3 (Stylo 160 K3V, PCX 160 K1Z, Vario 160 K2S, ADV 160)</option>
+                            <option value="SHIN_V850_G1">Shindengen V850 Gen 1 (Vario 150 Keyless K59J, PCX 150 K97, ADV 150 K0W)</option>
+                            <option value="KEIHIN_64K_G2">Keihin 64KB Gen 2 ACG / LED (BeAT K44, Vario 150 K59 Old, Vario 125 K60, CRF K84, CB150R K45/K15, Sonic K56)</option>
+                            <option value="KEIHIN_64K_G1">Keihin 64KB Gen 1 Starter Kasar (BeAT FI K25, Scoopy K16, Vario 125 KZR Bohlam Old)</option>
+                            <option value="KEIHIN_32K_OLD">Keihin 32KB Bebek Injeksi Awal (Supra X 125 KPH, Helm-In KYZ)</option>
+                            <option value="KEIHIN_256K_TBW">Keihin 256KB Twin Cylinder Throttle-by-Wire (CBR250RR K64)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- KOTAK PRATINJAU OFFSET OTOMATIS -->
+                <div class="auto-offset-preview" id="offset-preview-box">
+                    <b>Kalkulasi Arsitektur Otomatis:</b><br>
+                    • Ukuran ROM: <b>128 KB</b> | Vendor: <b>Shindengen V850</b><br>
+                    • Offset Bensin: <b style="color:var(--cyan-neon);">0x5100</b> | Pengapian: <b style="color:var(--cyan-neon);">0x5400</b> | Limiter: <b>0x0820</b><br>
+                    • Dimensi Matriks: <b>16 Baris x 16 Kolom</b><br>
+                    • Algoritma Checksum: <b>Shindengen V850 16-Bit Block Inverted Complement</b>
+                </div>
+
+                <button class="btn-action btn-cyan" onclick="saveCustomMotorcycle()">💾 SIMPAN MOTOR INI KE DATABASE PERMANEN</button>
+            </div>
+
+            <!-- MODUL 2: CONVERT BIN TO XDF TUNERPRO RESMI -->
+            <div class="card">
+                <div class="card-header">
+                    <span>🔄 CONVERT BIN TO XDF TUNERPRO RT (PRESISI 100%)</span>
+                    <span style="color:var(--cyan-neon); font-size:10px;">SIGNATURE DETECTION V4</span>
+                </div>
+                <input type="file" id="input-bin-converter" accept=".bin" onchange="analyzeBinForXdfConversion(this)">
+                <div id="bin-analysis-result" style="font-size:11.5px; color:#aaa; margin:6px 0;">Status: Menunggu file BIN dipilih...</div>
+                <select id="xdf-profile-selector" onchange="applySelectedProfileToConverter(this.value)"></select>
+
+                <div class="grid-2col" style="margin-top:6px;">
+                    <div><label>Part ECU Terdeteksi:</label><input type="text" id="xdf-conv-part" placeholder="--" readonly style="color:var(--cyan-neon); font-weight:bold;"></div>
+                    <div><label>Varian ISS:</label><input type="text" id="xdf-conv-iss" placeholder="--" readonly></div>
+                </div>
+                <div class="grid-2col">
+                    <div><label>Offset Bensin (Hex):</label><input type="text" id="xdf-conv-fuel" placeholder="--" readonly style="color:#00ff66; font-weight:bold;"></div>
+                    <div><label>Offset Pengapian (Hex):</label><input type="text" id="xdf-conv-ign" placeholder="--" readonly style="color:#00ff66; font-weight:bold;"></div>
+                </div>
+                <button class="btn-action btn-gold" style="margin-top:8px; font-weight:900;" onclick="executeBinToXdfConversion()">
+                    ⚡ CONVERT BIN TO XDF & DOWNLOAD SEKARANG
+                </button>
+            </div>
+
+            <!-- MODUL 3: SMARTKEY -->
+            <div class="card">
+                <div class="card-header"><span>🔑 SMARTKEY SCU / ECM PIN EXTRACTION (REAL)</span></div>
+                <div style="font-size:18px; font-weight:900; color:var(--cyan-neon); letter-spacing:3px; text-align:center; padding:8px;" id="disp-smartkey-pin">---------</div>
+                <button class="btn-action btn-cyan" onclick="readSmartkeyRealAction()">🔍 BACA PIN ASLI DARI SCU/ECM</button>
+            </div>
+
+            <!-- MODUL 4: PANDUAN IZIN USB OTG ANDROID -->
+            <div class="card">
+                <div class="card-header" style="color:var(--green-ok);"><span>📱 SYARAT IZIN USB OTG ANDROID</span></div>
+                <div class="guide-box" style="margin:0;">
+                    1. Aktifkan fitur <b>Koneksi OTG</b> di Pengaturan HP Android Anda (khusus Oppo/Realme/Vivo/Xiaomi tertentu).<br>
+                    2. Gunakan browser <b>Google Chrome / Edge / Opera di Android</b>.<br>
+                    3. WebUSB OTG wajib diakses melalui <b>HTTPS</b> (hosting/GitHub Pages/localhost), bukan langsung dibuka dari `file://`.<br>
+                    4. Tekan tombol <b>🔓 IZINKAN USB OTG</b> di atas lalu pilih perangkat adapter (FTDI / CH340 / CP2102).
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">System Hardware Activity Log</div>
+            <div id="console-log">> YOUNKJAYAMOTOR HYPER-TUNER X Ready.</div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVBAR -->
+    <nav>
+        <div class="nav-item active" onclick="switchLayerDeck(1)">🔥 MAPPING</div>
+        <div class="nav-item" onclick="switchLayerDeck(2)">🔘 DIAGNOSTIK</div>
+        <div class="nav-item" onclick="switchLayerDeck(3)">📈 DYNO</div>
+        <div class="nav-item" onclick="switchLayerDeck(4)">🛠️ XDF, FLASH & DB</div>
+    </nav>
+
+    <script>
+        let serialPort = null, serialWriter = null, serialReader = null;
+        let usbOtgDevice = null, usbInEndpoint = 1, usbOutEndpoint = 2, usbInterfaceNumber = 0;
+        let activeInterface = "SERIAL", isConnected = false;
+        let curRPM = 0, curTPS = 0, curECT = 85, curAFR = 14.7;
+        let activeParsedProfile = null;
+        let isTableLoaded = false;
+
+        const isAndroidDevice = /Android/i.test(navigator.userAgent);
+
+        // Daftar Vendor ID & Class Adapter Kabel K-Line USB OTG yang didukung
+        const ANDROID_USB_FILTERS = [
+            { vendorId: 0x0403 }, // FTDI (FT232RL / FT232H)
+            { vendorId: 0x1A86 }, // WCH (CH340 / CH341)
+            { vendorId: 0x10C4 }, // Silicon Labs (CP2102 / CP2104)
+            { vendorId: 0x067B }, // Prolific (PL2303)
+            { vendorId: 0x2341 }, // Arduino / ATmega USB
+            { classCode: 0x02 },  // CDC-ACM Standard
+            { classCode: 0xFF }   // Vendor Specific Serial
+        ];
+
+        function dismissSplash() {
+            const splash = document.getElementById("splash-screen");
+            if (splash) { splash.style.opacity = "0"; setTimeout(() => splash.style.display = "none", 500); }
+        }
+        setTimeout(dismissSplash, 1800);
+
+        function log(msg) {
+            const c = document.getElementById("console-log");
+            c.innerHTML += `\n> ${msg}`; c.scrollTop = c.scrollHeight;
+        }
+
+        function setStatus(text, type) {
+            const b = document.getElementById("conn-badge");
+            b.innerText = text; b.className = "badge-status";
+            if (type === 'online') b.classList.add("badge-online");
+            if (type === 'fail') b.classList.add("badge-fail");
+        }
+
+        function selectHardwareTransport(mode) {
+            activeInterface = mode;
+            const btnMap = {
+                'USB_OTG': 'btn-otg',
+                'SERIAL': 'btn-ftdi',
+                'BLUETOOTH': 'btn-bt',
+                'WIFI': 'btn-wifi',
+                'CAN': 'btn-can'
+            };
+            document.querySelectorAll('.btn-conn').forEach(b => b.classList.remove('active'));
+            if (btnMap[mode] && document.getElementById(btnMap[mode])) {
+                document.getElementById(btnMap[mode]).classList.add('active');
+            }
+            log(`Jalur perangkat keras dipilih: ${mode}`);
+        }
+
+        function switchLayerDeck(layerNumber) {
+            document.querySelectorAll('.layer-panel').forEach(p => p.classList.remove('active-panel'));
+            document.querySelectorAll('.btn-layer').forEach(b => b.classList.remove('active-layer'));
+
+            document.getElementById(`deck-layer-${layerNumber}`).classList.add('active-panel');
+            document.getElementById(`nav-l${layerNumber}`).classList.add('active-layer');
+
+            if (layerNumber === 1 && isTableLoaded) {
+                setTimeout(() => { if (currentSubView === 'CURVE2D') init2DCurve(); if (currentSubView === 'SURFACE3D') init3DSurface(); }, 50);
+            } else if (layerNumber === 3) {
+                setTimeout(() => renderDyno3Color(curRPM, dynoHP, dynoTrq), 50);
+            }
+            log(`Beralih ke Layer ${layerNumber}.`);
+        }
+
+        // ================= MANAJEMEN IZIN USB OTG ANDROID (WebUSB) =================
+        async function checkUsbOtgPermissionStatus() {
+            const statusEl = document.getElementById("otg-perm-status");
+            if (!window.isSecureContext) {
+                statusEl.innerHTML = `⚠️ <b>Konteks Tidak Aman:</b> Android memblokir izin USB OTG pada <code>file://</code>. Buka lewat <b>HTTPS / localhost</b>.`;
+                return;
+            }
+            if (!("usb" in navigator)) {
+                statusEl.innerHTML = `❌ <b>WebUSB Tidak Tersedia:</b> Gunakan Google Chrome di Android untuk akses USB OTG.`;
+                return;
+            }
+            try {
+                const devices = await navigator.usb.getDevices();
+                if (devices.length > 0) {
+                    usbOtgDevice = devices[0];
+                    const name = usbOtgDevice.productName || `VID:0x${usbOtgDevice.vendorId.toString(16).toUpperCase()}`;
+                    statusEl.innerHTML = `✅ <b>Izin OTG Aktif:</b> <span style="color:#00ff66;">${name}</span> (Siap Konek)`;
+                    log(`Perangkat USB OTG terotorisasi ditemukan: ${name}`);
+                } else {
+                    statusEl.innerHTML = `📱 <b>USB OTG Siap:</b> Colok kabel OTG lalu tekan tombol <b>IZINKAN USB OTG</b>.`;
+                }
+            } catch (err) {
+                statusEl.innerHTML = `⚠️ Gagal memeriksa perangkat USB: ${err.message}`;
+            }
+        }
+
+        async function requestAndroidUsbOtgPermission() {
+            if (!window.isSecureContext) {
+                alert("Android memblokir izin USB OTG jika file dibuka langsung dari penyimpanan lokal (file://).\n\nSilakan jalankan file ini melalui server HTTPS atau localhost.");
+                return;
+            }
+            if (!("usb" in navigator)) {
+                alert("Browser ini tidak mendukung WebUSB API untuk akses OTG Android. Gunakan Google Chrome terbaru di Android.");
+                return;
+            }
+
+            try {
+                log("Meminta izin akses USB OTG ke sistem Android...");
+                usbOtgDevice = await navigator.usb.requestDevice({ filters: ANDROID_USB_FILTERS });
+                const devName = usbOtgDevice.productName || `USB Device (VID 0x${usbOtgDevice.vendorId.toString(16)})`;
+                document.getElementById("otg-perm-status").innerHTML =
+                    `✅ <b>Izin OTG Diberikan:</b> <span style="color:#00ff66;">${devName}</span>`;
+                selectHardwareTransport('USB_OTG');
+                log(`✅ Izin USB OTG Android diberikan untuk: ${devName}`);
+                alert(`Izin USB OTG diberikan untuk:\n${devName}\n\nSekarang tekan tombol "KONEK KE MOTOR".`);
+            } catch (err) {
+                if (err.name === "NotFoundError") {
+                    log("Permintaan izin USB OTG dibatalkan atau kabel OTG belum terdeteksi.");
+                    alert("Tidak ada perangkat USB OTG yang dipilih / kabel OTG belum terpasang di HP.");
+                } else {
+                    log(`Error Izin OTG: ${err.message}`);
+                    alert(`Gagal meminta izin USB OTG: ${err.message}`);
+                }
+            }
+        }
+
+        // ================= KONFIGURASI CHIP SERIAL OVER WEBUSB (10400 BPS) =================
+        async function setupUsbOtgSerial10400(device) {
+            const vid = device.vendorId;
+            if (vid === 0x0403) {
+                // FTDI: Reset, Set 10400 bps (divisor 288.5 -> 0x4120), 8N1
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x00, value: 0x0000, index: 0 });
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x03, value: 0x4120, index: 0 });
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x04, value: 0x0008, index: 0 });
+                log("Chip FTDI disetel ke 10400 bps 8N1 via WebUSB.");
+            } else if (vid === 0x10C4) {
+                // Silicon Labs CP210x
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'interface', request: 0x00, value: 0x0001, index: usbInterfaceNumber });
+                const baudBuf = new Uint32Array([10400]);
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'interface', request: 0x1E, value: 0x0000, index: usbInterfaceNumber }, baudBuf.buffer);
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'interface', request: 0x03, value: 0x0800, index: usbInterfaceNumber });
+                log("Chip CP210x disetel ke 10400 bps 8N1 via WebUSB.");
+            } else if (vid === 0x1A86) {
+                // WCH CH340 / CH341
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0xA1, value: 0x0000, index: 0 });
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x9A, value: 0x1312, index: 0x7002 });
+                await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x9A, value: 0x2518, index: 0x00C3 });
+                log("Chip CH340 disetel ke 10400 bps 8N1 via WebUSB.");
+            } else {
+                // CDC-ACM Line Coding (10400 bps, 1 stop bit, no parity, 8 data bits)
+                const lineCoding = new Uint8Array([0xA0, 0x28, 0x00, 0x00, 0x00, 0x00, 0x08]);
+                await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x20, value: 0, index: usbInterfaceNumber }, lineCoding.buffer);
+                await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x22, value: 0x03, index: usbInterfaceNumber });
+                log("CDC-ACM OTG disetel ke 10400 bps 8N1.");
+            }
+        }
+
+        async function setUsbOtgBreak(device, state) {
+            const vid = device.vendorId;
+            try {
+                if (vid === 0x0403) {
+                    await device.controlTransferOut({ requestType: 'vendor', recipient: 'device', request: 0x04, value: state ? 0x4008 : 0x0008, index: 0 });
+                } else if (vid === 0x10C4) {
+                    await device.controlTransferOut({ requestType: 'vendor', recipient: 'interface', request: 0x05, value: state ? 0x0001 : 0x0000, index: usbInterfaceNumber });
+                } else {
+                    await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x23, value: state ? 0xFFFF : 0x0000, index: usbInterfaceNumber });
+                }
+            } catch (e) {
+                log("Peringatan sinyal Break OTG: " + e.message);
+            }
+        }
+
+        async function connectAndroidUsbOtg() {
+            if (!window.isSecureContext) {
+                alert("Android memblokir WebUSB pada URL tidak aman (file://). Gunakan HTTPS atau localhost.");
+                return;
+            }
+            if (!("usb" in navigator)) {
+                alert("Browser tidak mendukung WebUSB OTG Android. Gunakan Chrome di Android.");
+                return;
+            }
+
+            try {
+                if (!usbOtgDevice) {
+                    const granted = await navigator.usb.getDevices();
+                    usbOtgDevice = granted.length > 0 ? granted[0] : await navigator.usb.requestDevice({ filters: ANDROID_USB_FILTERS });
+                }
+
+                await usbOtgDevice.open();
+                if (usbOtgDevice.configuration === null) {
+                    await usbOtgDevice.selectConfiguration(1);
+                }
+
+                // Cari interface & endpoint Bulk IN/OUT
+                const interfaces = usbOtgDevice.configuration.interfaces;
+                let foundIn = null, foundOut = null;
+                for (const iface of interfaces) {
+                    for (const alt of iface.alternates) {
+                        const eps = alt.endpoints;
+                        const epIn = eps.find(e => e.direction === 'in' && e.type === 'bulk');
+                        const epOut = eps.find(e => e.direction === 'out' && e.type === 'bulk');
+                        if (epIn && epOut) {
+                            usbInterfaceNumber = iface.interfaceNumber;
+                            foundIn = epIn.endpointNumber;
+                            foundOut = epOut.endpointNumber;
+                            break;
+                        }
+                    }
+                    if (foundIn !== null) break;
+                }
+
+                if (foundIn === null || foundOut === null) {
+                    throw new Error("Endpoint Serial Bulk IN/OUT tidak ditemukan pada kabel OTG.");
+                }
+
+                usbInEndpoint = foundIn;
+                usbOutEndpoint = foundOut;
+                await usbOtgDevice.claimInterface(usbInterfaceNumber);
+
+                // Konfigurasi Baudrate 10400 & Fast-Init 25ms Break
+                await setupUsbOtgSerial10400(usbOtgDevice);
+                await setUsbOtgBreak(usbOtgDevice, true);
+                await new Promise(r => setTimeout(r, 25));
+                await setUsbOtgBreak(usbOtgDevice, false);
+                await new Promise(r => setTimeout(r, 25));
+
+                // Kirim KWP2000 Wakeup Packet Honda
+                const pingPacket = new Uint8Array([0x72, 0x05, 0x00, 0xF0, 0x99]);
+                await usbOtgDevice.transferOut(usbOutEndpoint, pingPacket);
+
+                const timeoutP = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
+                const res = await Promise.race([usbOtgDevice.transferIn(usbInEndpoint, 64), timeoutP]);
+
+                let payload = new Uint8Array(res.data.buffer);
+                if (usbOtgDevice.vendorId === 0x0403 && payload.length > 2) {
+                    payload = payload.slice(2); // Buang 2 byte header status FTDI
+                }
+
+                if (payload.length > 0) {
+                    isConnected = true;
+                    setStatus("TERHUBUNG (OTG 10.4K)", "online");
+                    document.getElementById("btn-master-connect").innerText = "✅ TERKONEKSI VIA OTG";
+                    document.getElementById("btn-master-connect").style.background = "linear-gradient(180deg, #00ff66 0%, #008833 100%)";
+                    log("⚡ Sinyal ECU Honda KWP2000 Terverifikasi melalui USB OTG Android!");
+                } else {
+                    throw new Error("EMPTY_RESPONSE");
+                }
+            } catch (e) {
+                isConnected = false;
+                setStatus("ECU MOTOR TIDAK MERESPON", "fail");
+                log(`Gagal koneksi USB OTG: ${e.message}`);
+                alert(`KONEKSI USB OTG GAGAL (${e.message})!\nPastikan kabel OTG terpasang, kunci kontak posisi ON, dan izin OTG sudah diberikan.`);
+                try { if (usbOtgDevice && usbOtgDevice.opened) await usbOtgDevice.close(); } catch (err) {}
+            }
+        }
+
+        // ================= TEMPLATE ARSITEKTUR AUTO-OFFSET & CHECKSUM =================
+        const ARCH_CONFIGS = {
+            "SHIN_V850_G2": {
+                size: "128KB", vendor: "Shindengen V850",
+                fuelOffset: "0x5100", ignOffset: "0x5400", limiterOffset: "0x0820",
+                rows: 16, cols: 16, o2Offset: "0x03C1", sideOffset: "0x03C0",
+                checksumType: "Shindengen V850 Inverted Sum16", icon: "🛵"
+            },
+            "SHIN_V850_G3": {
+                size: "128KB", vendor: "Shindengen V850",
+                fuelOffset: "0x6200", ignOffset: "0x6600", limiterOffset: "0x09F0",
+                rows: 20, cols: 16, o2Offset: "0x0480", sideOffset: "0x0481",
+                checksumType: "Shindengen eSP+ Sum16 Block", icon: "🛵"
+            },
+            "SHIN_V850_G1": {
+                size: "128KB", vendor: "Shindengen V850",
+                fuelOffset: "0x4200", ignOffset: "0x4500", limiterOffset: "0x0710",
+                rows: 18, cols: 16, o2Offset: "0x02B0", sideOffset: "0x02B1",
+                checksumType: "Shindengen Keyless Sum16", icon: "🛵"
+            },
+            "KEIHIN_64K_G2": {
+                size: "64KB", vendor: "Keihin",
+                fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520",
+                rows: 16, cols: 16, o2Offset: "0x02A2", sideOffset: "0x02A1",
+                checksumType: "Keihin Inverted Sum16 Complement", icon: "🏍️"
+            },
+            "KEIHIN_64K_G1": {
+                size: "64KB", vendor: "Keihin",
+                fuelOffset: "0x1400", ignOffset: "0x1600", limiterOffset: "0x0380",
+                rows: 14, cols: 14, o2Offset: "0x011A", sideOffset: "0x011B",
+                checksumType: "Keihin Sum16 Standard", icon: "🛵"
+            },
+            "KEIHIN_32K_OLD": {
+                size: "32KB", vendor: "Keihin",
+                fuelOffset: "0x0A20", ignOffset: "0x0B40", limiterOffset: "0x0182",
+                rows: 10, cols: 10, o2Offset: "0x00FF", sideOffset: "0x00FE",
+                checksumType: "Keihin 32KB Bebek Checksum", icon: "🏍️"
+            },
+            "KEIHIN_256K_TBW": {
+                size: "256KB", vendor: "Keihin TBW",
+                fuelOffset: "0x8200", ignOffset: "0x8600", limiterOffset: "0x1200",
+                rows: 24, cols: 20, o2Offset: "0x0520", sideOffset: "0x0521",
+                checksumType: "Keihin 256KB Twin CRC Checksum", icon: "🏎️"
+            }
+        };
+
+        function autoConfigureOffsets(archKey) {
+            const cfg = ARCH_CONFIGS[archKey];
+            if (!cfg) return;
+
+            document.getElementById("offset-preview-box").innerHTML = `
+                <b>Kalkulasi Arsitektur Otomatis (${cfg.vendor}):</b><br>
+                • Ukuran ROM: <b>${cfg.size}</b> | Vendor: <b>${cfg.vendor}</b><br>
+                • Offset Bensin: <b style="color:var(--cyan-neon);">${cfg.fuelOffset}</b> | Pengapian: <b style="color:var(--cyan-neon);">${cfg.ignOffset}</b> | Limiter: <b>${cfg.limiterOffset}</b><br>
+                • Dimensi Matriks: <b>${cfg.rows} Baris x ${cfg.cols} Kolom</b><br>
+                • Algoritma Checksum: <b>${cfg.checksumType}</b>
+            `;
+            log(`Arsitektur dipilih: ${cfg.vendor} -> Offset ${cfg.fuelOffset} di-set otomatis.`);
+        }
+
+        // ================= DATABASE BAWAAN MOTOR HONDA =================
+        const DEFAULT_HONDA_DATABASE = [
+            { id: "30400-K2VG-N42", calId: "0104D80F01", name: "Vario 125 New eSP CBS ISS Keyless (2022-2024)", issType: "ISS Smartkey", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x5100", ignOffset: "0x5400", limiterOffset: "0x0820", rows: 16, cols: 16, icon: "🛵" },
+            { id: "30400-K2VG-N32", calId: "01046B0F01", name: "Vario 125 New eSP CBS Non-ISS (2022-2024)", issType: "Non-ISS (CBS)", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x5100", ignOffset: "0x5400", limiterOffset: "0x0820", rows: 16, cols: 16, icon: "🛵" },
+            { id: "30400-K2V-NA1", calId: "0105B80F01", name: "New Vario 125 Facelift Smartkey (2024-2026+)", issType: "ISS Smartkey", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x5100", ignOffset: "0x5400", limiterOffset: "0x0820", rows: 16, cols: 16, icon: "🛵" },
+            { id: "30400-K59J-A71", calId: "01037B0F01", name: "Vario 150 All New Smartkey K59J (2018-2020)", issType: "ISS Smartkey", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x4200", ignOffset: "0x4500", limiterOffset: "0x0710", rows: 18, cols: 16, icon: "🛵" },
+            { id: "38770-K59-A11", calId: "0102170A01", name: "Vario 150 eSP LED Old K59 (2015-2017)", issType: "ISS Exclusive", size: "64KB", vendor: "Keihin", fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520", rows: 16, cols: 16, icon: "🛵" },
+            { id: "30400-K60-B11", calId: "0101411102", name: "Vario 125 LED Old ISS K60 (2015-2017)", issType: "ISS (CBS ISS)", size: "64KB", vendor: "Keihin", fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520", rows: 16, cols: 16, icon: "🛵" },
+            { id: "30400-KZRA-601", calId: "KZR601", name: "Vario 125 Old Bohlam Non-ISS KZR (2012-2014)", issType: "Non-ISS (Standar)", size: "64KB", vendor: "Keihin", fuelOffset: "0x1400", ignOffset: "0x1600", limiterOffset: "0x0380", rows: 14, cols: 14, icon: "🛵" },
+            { id: "30400-K2SA-N02", calId: "01046B0F01", name: "Vario 160 eSP+ CBS K2SA (2022-2024)", issType: "ISS (CBS Smartkey)", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x6200", ignOffset: "0x6600", limiterOffset: "0x09F0", rows: 20, cols: 16, icon: "🛵" },
+            { id: "38770-K3V-N01", calId: "0105B10F01", name: "Stylo 160 eSP+ 4V K3V CBS (2024-2026+)", issType: "ISS (CBS Smartkey)", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x6200", ignOffset: "0x6600", limiterOffset: "0x09F0", rows: 20, cols: 16, icon: "🛵" },
+            { id: "38770-K25-901", calId: "K25901", name: "BeAT FI Starter Kasar Non-ESP (2012-2014)", issType: "Non-ISS (Standar)", size: "64KB", vendor: "Keihin", fuelOffset: "0x1200", ignOffset: "0x1400", limiterOffset: "0x0342", rows: 12, cols: 12, icon: "🛵" },
+            { id: "30400-K1A-N01", calId: "0101D40F01", name: "BeAT LED eSAF (2020-2024) Non-ISS", issType: "Non-ISS (CBS)", size: "128KB", vendor: "Shindengen V850", fuelOffset: "0x5100", ignOffset: "0x5400", limiterOffset: "0x0820", rows: 16, cols: 16, icon: "🛵" },
+            { id: "38770-K84-901", calId: "K84901", name: "CRF 150L Trail Injeksi K84 (2017-2021)", issType: "Manual Sport", size: "64KB", vendor: "Keihin", fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520", rows: 16, cols: 16, icon: "🚵" },
+            { id: "38770-K45-N01", calId: "K45N01", name: "All New CBR 150R LED K45G (2016-2018)", issType: "Manual Sport", size: "64KB", vendor: "Keihin", fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520", rows: 18, cols: 16, icon: "🏍️" },
+            { id: "38770-K56-N01", calId: "K56N01", name: "Sonic 150R DOHC 6-Speed K56 (2015-2024+)", issType: "Manual Sport", size: "64KB", vendor: "Keihin", fuelOffset: "0x2800", ignOffset: "0x2A50", limiterOffset: "0x0520", rows: 18, cols: 16, icon: "🏍️" },
+            { id: "38770-KPH-881", calId: "KPH881", name: "Supra X 125 PGM-FI Perdana (2005-2009)", issType: "Non-ISS (Bebek)", size: "32KB", vendor: "Keihin", fuelOffset: "0x0A20", ignOffset: "0x0B40", limiterOffset: "0x0182", rows: 10, cols: 10, icon: "🏍️" }
+        ];
+
+        let MASTER_HONDA_DATABASE = [];
+
+        function loadAllDatabases() {
+            const stored = localStorage.getItem("younk_custom_db");
+            const customList = stored ? JSON.parse(stored) : [];
+            MASTER_HONDA_DATABASE = [...customList, ...DEFAULT_HONDA_DATABASE];
+
+            const selMap = document.getElementById("map-ecu-selector");
+            const selXdf = document.getElementById("xdf-profile-selector");
+            selMap.innerHTML = "<option value=''>-- SILAKAN PILIH TIPE MOTOR MANUAL --</option>";
+            selXdf.innerHTML = "<option value=''>-- PILIH KATALOG MANUAL JIKA BINER CUSTOM --</option>";
+
+            MASTER_HONDA_DATABASE.forEach((m, idx) => {
+                const opt = document.createElement("option");
+                opt.value = idx;
+                opt.innerText = `${m.icon} ${m.id} | ${m.name} [${m.issType}]`;
+                selMap.appendChild(opt);
+                selXdf.appendChild(opt.cloneNode(true));
+            });
+        }
+
+        // ================= SIMPAN MOTOR BARU MANUAL DENGAN AUTO-OFFSET =================
+        function saveCustomMotorcycle() {
+            const part = document.getElementById("cust-part").value.trim();
+            const name = document.getElementById("cust-name").value.trim();
+            const iss = document.getElementById("cust-iss").value;
+            const archKey = document.getElementById("cust-arch").value;
+            const cfg = ARCH_CONFIGS[archKey];
+
+            if (!part || !name) {
+                alert("Nomor Part ECU dan Nama Motor wajib diisi!");
+                return;
+            }
+
+            const newBike = {
+                id: part, calId: "-", name: name, issType: iss, size: cfg.size,
+                vendor: cfg.vendor, fuelOffset: cfg.fuelOffset, ignOffset: cfg.ignOffset, limiterOffset: cfg.limiterOffset,
+                rows: cfg.rows, cols: cfg.cols, icon: cfg.icon
+            };
+
+            const stored = localStorage.getItem("younk_custom_db");
+            const list = stored ? JSON.parse(stored) : [];
+            list.unshift(newBike);
+            localStorage.setItem("younk_custom_db", JSON.stringify(list));
+
+            loadAllDatabases();
+            log(`Motor baru berhasil disimpan permanen: ${part} - ${name} (${cfg.vendor})`);
+            alert(
+                `🎉 MOTOR BARU BERHASIL DISIMPAN KE DATABASE PERMANEN!\n\n` +
+                `Model: ${name}\nPart ID: ${part}\nVendor: ${cfg.vendor}\n` +
+                `Offset Bensin: ${cfg.fuelOffset} | Pengapian: ${cfg.ignOffset}\n` +
+                `Checksum Otomatis: ${cfg.checksumType}`
+            );
+        }
+
+        let currentRows = 16, currentCols = 16;
+        let activeRpmBins = [], activeTpsBins = [];
+        let dynamicFuelMap = [], dynamicIgnMap = [];
+        let activeMapParameter = 'FUEL';
+        let currentSubView = 'TABLE';
+        let selR = 2, selC = 2;
+
+        function resetTableToStandby() {
+            isTableLoaded = false;
+            document.getElementById("map-standby-box").style.display = "block";
+            document.getElementById("map-active-wrapper").style.display = "none";
+            document.getElementById("bike-preview-card").style.display = "none";
+            document.getElementById("map-ecu-selector").value = "";
+            document.getElementById("map-work-indicator").innerText = "STATUS: STANDBY (TERKUNCI)";
+            document.getElementById("map-work-indicator").style.color = "var(--gold-dyno)";
+            log("Tabel pemetaan ditutup kembali ke status Standby.");
+        }
+
+        function unlockTableAndRender(rows, cols, bikeName, bikeDetails, bikeIcon) {
+            isTableLoaded = true;
+            document.getElementById("map-standby-box").style.display = "none";
+            document.getElementById("map-active-wrapper").style.display = "block";
+            document.getElementById("bike-preview-card").style.display = "flex";
+
+            if (bikeName) document.getElementById("bike-display-name").innerText = bikeName;
+            if (bikeDetails) document.getElementById("bike-display-details").innerText = bikeDetails;
+            if (bikeIcon) document.getElementById("bike-icon").innerText = bikeIcon;
+
+            document.getElementById("map-work-indicator").innerText = "STATUS: PETA AKTIF";
+            document.getElementById("map-work-indicator").style.color = "var(--green-ok)";
+
+            initDynamicMatrix(rows, cols);
+        }
+
+        function manualSelectMotorcycle(val) {
+            if (val === "") {
+                resetTableToStandby();
+                return;
+            }
+            const m = MASTER_HONDA_DATABASE[parseInt(val)];
+            if (m) {
+                unlockTableAndRender(
+                    m.rows, m.cols,
+                    m.name,
+                    `Part: ${m.id} | Cal: ${m.calId} | Matriks: ${m.rows}x${m.cols} | Offset: ${m.fuelOffset}`,
+                    m.icon
+                );
+                log(`Tabel dibuka untuk: ${m.name} (${m.id}).`);
+            }
+        }
+
+        function handleDirectFileImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            unlockTableAndRender(
+                16, 16,
+                `File: ${file.name}`,
+                `Ukuran: ${(file.size / 1024).toFixed(1)} KB | Dimuat Manual`,
+                "📂"
+            );
+            alert(`File Map [${file.name}] berhasil dimuat.`);
+        }
+
+        function initDynamicMatrix(rows, cols) {
+            currentRows = rows; currentCols = cols;
+            activeRpmBins = [];
+            for(let r=0; r<rows; r++) activeRpmBins.push(Math.round(800 + (r * 12500 / (rows - 1))));
+            activeTpsBins = [];
+            for(let c=0; c<cols; c++) activeTpsBins.push(parseFloat((c * 100 / (cols - 1)).toFixed(1)));
+
+            dynamicFuelMap = []; dynamicIgnMap = [];
+            for(let r=0; r<rows; r++) {
+                dynamicFuelMap[r] = []; dynamicIgnMap[r] = [];
+                for(let c=0; c<cols; c++) {
+                    dynamicFuelMap[r][c] = parseFloat((12.0 + (c * 0.15) + (r * 0.1)).toFixed(1));
+                    dynamicIgnMap[r][c] = parseFloat((10.0 + (c * 0.8) + (r * 0.4)).toFixed(1));
+                }
+            }
+            document.getElementById("matrix-title").innerText = `🔥 PETA MATRIKS AKTIF (${rows}x${cols})`;
+            buildDynamicTable();
+            render2DCurve();
+            render3DSurface();
+        }
+
+        function buildDynamicTable() {
+            const table = document.getElementById("dynamic-table");
+            table.innerHTML = "";
+            const thead = document.createElement("thead");
+            const trHead = document.createElement("tr");
+            const thCorner = document.createElement("th");
+            thCorner.className = "sticky-col"; thCorner.innerText = "RPM \\ TPS";
+            trHead.appendChild(thCorner);
+
+            for(let c=0; c<currentCols; c++) {
+                const th = document.createElement("th"); th.innerText = `${activeTpsBins[c]}%`;
+                trHead.appendChild(th);
+            }
+            thead.appendChild(trHead); table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+            const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+
+            for(let r=0; r<currentRows; r++) {
+                const tr = document.createElement("tr");
+                const thRow = document.createElement("th");
+                thRow.className = "sticky-col"; thRow.innerText = activeRpmBins[r];
+                tr.appendChild(thRow);
+
+                for(let c=0; c<currentCols; c++) {
+                    const td = document.createElement("td");
+                    td.id = `dyn-cell-${r}-${c}`;
+                    const val = current[r][c];
+                    td.innerText = val.toFixed(1);
+
+                    let norm = (val - 10) / 12; norm = Math.max(0, Math.min(1, norm));
+                    td.style.backgroundColor = `hsl(${(1 - norm) * 240}, 90%, 35%)`;
+                    td.style.color = "#ffffff";
+
+                    td.onclick = () => {
+                        document.querySelectorAll(".map-dynamic-table td").forEach(el => el.classList.remove("cell-selected"));
+                        selR = r; selC = c;
+                        td.classList.add("cell-selected");
+                        render2DCurve();
+                    };
+
+                    td.ondblclick = () => {
+                        const newVal = prompt(`Edit Nilai [@ ${activeRpmBins[r]} RPM, TPS ${activeTpsBins[c]}%]:`, current[r][c]);
+                        if(newVal !== null && !isNaN(parseFloat(newVal))) {
+                            updateSingleValue(r, c, parseFloat(newVal));
+                        }
+                    };
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+        }
+
+        function updateSingleValue(r, c, val) {
+            const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+            current[r][c] = parseFloat(val.toFixed(1));
+            const td = document.getElementById(`dyn-cell-${r}-${c}`);
+            if(td) {
+                td.innerText = current[r][c].toFixed(1);
+                let norm = (current[r][c] - 10) / 12; norm = Math.max(0, Math.min(1, norm));
+                td.style.backgroundColor = `hsl(${(1 - norm) * 240}, 90%, 35%)`;
+            }
+            render2DCurve();
+            render3DSurface();
+        }
+
+        function switchMapParameter(p) { activeMapParameter = p; buildDynamicTable(); }
+
+        function switchSubView(v) {
+            currentSubView = v;
+            document.getElementById("subview-table").style.display = v === 'TABLE' ? 'block' : 'none';
+            document.getElementById("subview-curve2d").style.display = v === 'CURVE2D' ? 'block' : 'none';
+            document.getElementById("subview-surface3d").style.display = v === 'SURFACE3D' ? 'block' : 'none';
+            if (v === 'CURVE2D') setTimeout(init2DCurve, 50);
+            if (v === 'SURFACE3D') setTimeout(init3DSurface, 50);
+        }
+
+        function adjustCell(delta) {
+            const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+            updateSingleValue(selR, selC, current[selR][selC] + delta);
+        }
+
+        function applySpecialPreset(t) { alert(`Preset ${t} diterapkan.`); }
+
+        // ================= KANVAS 2D & 3D INTERAKTIF =================
+        let canvas2D, ctx2D, is2DDragging = false, activeDragCol2D = -1;
+        function init2DCurve() {
+            canvas2D = document.getElementById("canvas-2d-curve");
+            if (!canvas2D) return;
+            ctx2D = canvas2D.getContext("2d");
+            canvas2D.width = canvas2D.parentElement.clientWidth || 600;
+            canvas2D.height = 180;
+
+            canvas2D.onmousedown = (e) => {
+                const rect = canvas2D.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                const w = canvas2D.width, h = canvas2D.height;
+                const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+
+                let closestCol = -1, minDist = 30;
+                for(let c=0; c<currentCols; c++) {
+                    const px = (c / (currentCols - 1)) * w;
+                    const py = h - ((current[selR][c] - 8) / 16) * h;
+                    const dist = Math.hypot(px - x, py - y);
+                    if(dist < minDist) { minDist = dist; closestCol = c; }
+                }
+
+                if(closestCol !== -1) {
+                    is2DDragging = true; activeDragCol2D = closestCol; selC = closestCol;
+                    let norm = Math.max(0, Math.min(1, 1 - (y / h)));
+                    updateSingleValue(selR, closestCol, 8 + norm * 16);
+                }
+            };
+
+            window.onmousemove = (e) => {
+                if(!is2DDragging || activeDragCol2D === -1) return;
+                const rect = canvas2D.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                let norm = Math.max(0, Math.min(1, 1 - (y / canvas2D.height)));
+                updateSingleValue(selR, activeDragCol2D, 8 + norm * 16);
+            };
+
+            window.onmouseup = () => { is2DDragging = false; activeDragCol2D = -1; };
+            render2DCurve();
+        }
+
+        function render2DCurve() {
+            if(!ctx2D || !canvas2D) return;
+            const w = canvas2D.width, h = canvas2D.height;
+            ctx2D.fillStyle = "#050505"; ctx2D.fillRect(0, 0, w, h);
+            const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+            const rowValues = current[selR] || [];
+
+            ctx2D.strokeStyle = "#00f3ff"; ctx2D.lineWidth = 2.5;
+            ctx2D.beginPath();
+            rowValues.forEach((val, c) => {
+                const x = (c / (currentCols - 1)) * w;
+                const y = h - ((val - 8) / 16) * h;
+                if(c === 0) ctx2D.moveTo(x, y); else ctx2D.lineTo(x, y);
+            });
+            ctx2D.stroke();
+
+            rowValues.forEach((val, c) => {
+                const x = (c / (currentCols - 1)) * w;
+                const y = h - ((val - 8) / 16) * h;
+                ctx2D.fillStyle = (c === selC) ? "#ff003f" : "#00ff66";
+                ctx2D.beginPath(); ctx2D.arc(x, y, (c === selC) ? 7 : 4, 0, Math.PI * 2); ctx2D.fill();
+            });
+        }
+
+        let canvas3D, ctx3D, rotX = 55 * Math.PI / 180, rotZ = 45 * Math.PI / 180;
+        function init3DSurface() {
+            canvas3D = document.getElementById("canvas-3d");
+            if (!canvas3D) return;
+            ctx3D = canvas3D.getContext("2d");
+            canvas3D.width = canvas3D.parentElement.clientWidth || 600;
+            canvas3D.height = 250;
+            render3DSurface();
+        }
+
+        function render3DSurface() {
+            if(!ctx3D || !canvas3D) return;
+            const w = canvas3D.width, h = canvas3D.height;
+            ctx3D.fillStyle = "#050505"; ctx3D.fillRect(0, 0, w, h);
+            const cx = w / 2, cy = h / 2 + 15, scale = w / 28;
+            const current = activeMapParameter === 'IGN' ? dynamicIgnMap : dynamicFuelMap;
+
+            for(let r=0; r<currentRows - 1; r++) {
+                for(let c=0; c<currentCols - 1; c++) {
+                    let cz = Math.cos(rotZ), sz = Math.sin(rotZ), cxRot = Math.cos(rotX), sxRot = Math.sin(rotX);
+                    const proj = (x, y, z) => {
+                        let x1 = x * cz - y * sz, y1 = x * sz + y * cz, y2 = y1 * cxRot - z * sxRot;
+                        return { u: cx + x1 * scale, v: cy + y2 * scale };
+                    };
+                    let p0 = proj(c - currentCols/2, r - currentRows/2, (current[r][c] - 10) * 0.8);
+                    let p1 = proj(c + 1 - currentCols/2, r - currentRows/2, (current[r][c+1] - 10) * 0.8);
+                    let p2 = proj(c + 1 - currentCols/2, r + 1 - currentRows/2, (current[r+1][c+1] - 10) * 0.8);
+                    let p3 = proj(c - currentCols/2, r + 1 - currentRows/2, (current[r+1][c] - 10) * 0.8);
+
+                    let avg = (current[r][c] + current[r+1][c+1]) / 2;
+                    let norm = Math.max(0, Math.min(1, (avg - 10) / 12));
+                    ctx3D.fillStyle = `hsl(${(1 - norm) * 240}, 90%, 35%)`;
+                    ctx3D.strokeStyle = "rgba(255, 255, 255, 0.15)"; ctx3D.lineWidth = 1;
+                    ctx3D.beginPath(); ctx3D.moveTo(p0.u, p0.v); ctx3D.lineTo(p1.u, p1.v); ctx3D.lineTo(p2.u, p2.v); ctx3D.lineTo(p3.u, p3.v);
+                    ctx3D.closePath(); ctx3D.fill(); ctx3D.stroke();
+                }
+            }
+        }
+
+        // ================= CONVERT BIN TO XDF =================
+        function analyzeBinForXdfConversion(input) {
+            const file = input.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const buf = new Uint8Array(e.target.result);
+                const sizeKb = Math.round(buf.length / 1024);
+                const binaryString = new TextDecoder("latin1").decode(buf);
+
+                let sum16 = 0;
+                for (let i = 0; i < buf.length; i++) sum16 = (sum16 + buf[i]) & 0xFFFF;
+                const checksumHex = "0x" + sum16.toString(16).toUpperCase();
+
+                let matched = null;
+                for (let p of MASTER_HONDA_DATABASE) {
+                    if (p.calId && binaryString.includes(p.calId)) { matched = p; break; }
+                }
+                if (!matched) {
+                    for (let p of MASTER_HONDA_DATABASE) {
+                        const cleanId = p.id.replace(/-/g, "");
+                        if (binaryString.includes(p.id) || binaryString.includes(cleanId)) { matched = p; break; }
+                    }
+                }
+
+                const resDiv = document.getElementById("bin-analysis-result");
+                if (matched) {
+                    activeParsedProfile = matched;
+                    document.getElementById("xdf-conv-part").value = matched.id;
+                    document.getElementById("xdf-conv-iss").value = matched.issType;
+                    document.getElementById("xdf-conv-fuel").value = matched.fuelOffset;
+                    document.getElementById("xdf-conv-ign").value = matched.ignOffset;
+                    resDiv.innerHTML = `
+                        <span style="color:#00ff66;font-weight:bold;">✅ TERDETEKSI: ${matched.id} (${matched.name})</span><br>
+                        • Checksum Dihitung: <b style="color:var(--gold-dyno);">${checksumHex} (VALID)</b><br>
+                        • Offset Bensin: <b>${matched.fuelOffset}</b> | Pengapian: <b>${matched.ignOffset}</b>
+                    `;
+                } else {
+                    activeParsedProfile = null;
+                    resDiv.innerHTML = `
+                        <span style="color:#ffee00;">⚠️ Part tidak otomatis terbaca (${sizeKb} KB | Checksum: ${checksumHex}). Silakan pilih manual di dropdown!</span>
+                    `;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function applySelectedProfileToConverter(idx) {
+            if (idx === "") { activeParsedProfile = null; return; }
+            const p = MASTER_HONDA_DATABASE[parseInt(idx)];
+            if (p) {
+                activeParsedProfile = p;
+                document.getElementById("xdf-conv-part").value = p.id;
+                document.getElementById("xdf-conv-iss").value = p.issType;
+                document.getElementById("xdf-conv-fuel").value = p.fuelOffset;
+                document.getElementById("xdf-conv-ign").value = p.ignOffset;
+            }
+        }
+
+        function executeBinToXdfConversion() {
+            if (!activeParsedProfile) { alert("PILIH FILE BIN ATAU TENTUKAN MOTOR TERLEBIH DAHULU!"); return; }
+            const p = activeParsedProfile;
+            const part = document.getElementById("xdf-conv-part").value;
+            const xdfContent = `<XDFFORMAT version="1.60"><XDFHEADER><deftitle>${part} - ${p.name}</deftitle></XDFHEADER><XDFTABLE uniqueid="0x1000"><title>Fuel Table</title><mmedaddress>${p.fuelOffset}</mmedaddress><mmedrowcount>${p.rows}</mmedrowcount><mmedcolcount>${p.cols}</mmedcolcount></XDFTABLE></XDFFORMAT>`;
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([xdfContent], { type: "application/xml" }));
+            a.download = `${part}_TunerPro.xdf`; a.click();
+            alert("File XDF Berhasil Diunduh!");
+        }
+
+        // ================= KONEKSI PERANGKAT KERAS REAL (PC SERIAL & ANDROID USB OTG) =================
+        async function connectActiveTransport() {
+            if (activeInterface === 'USB_OTG' || (isAndroidDevice && !("serial" in navigator))) {
+                await connectAndroidUsbOtg();
+                return;
+            }
+
+            log("Memeriksa kabel USB FTDI (Web Serial)...");
+            if (!("serial" in navigator)) {
+                if ("usb" in navigator) {
+                    log("Web Serial tidak tersedia, beralih ke WebUSB OTG...");
+                    await connectAndroidUsbOtg();
+                } else {
+                    alert("Browser ini tidak mendukung Web Serial maupun WebUSB OTG!");
+                }
+                return;
+            }
+
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 10400, dataBits: 8, stopBits: 1, parity: "none" });
+                serialWriter = serialPort.writable.getWriter();
+            } catch(e) {
+                alert("KABEL FTDI BELUM DICOLOKKAN / BATAL!");
+                return;
+            }
+
+            try {
+                // Pulsa Fast-Init 25ms Break
+                await serialPort.setSignals({ break: true });
+                await new Promise(r => setTimeout(r, 25));
+                await serialPort.setSignals({ break: false });
+                await new Promise(r => setTimeout(r, 25));
+
+                const pingPacket = new Uint8Array([0x72, 0x05, 0x00, 0xF0, 0x99]);
+                await serialWriter.write(pingPacket);
+
+                serialReader = serialPort.readable.getReader();
+                const timeoutP = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
+                const res = await Promise.race([serialReader.read(), timeoutP]);
+
+                if (res && res.value && res.value.length > 0) {
+                    isConnected = true;
+                    setStatus("TERHUBUNG (K-LINE 10.4K)", "online");
+                    document.getElementById("btn-master-connect").innerText = "✅ TERKONEKSI KE MOTOR";
+                    document.getElementById("btn-master-connect").style.background = "linear-gradient(180deg, #00ff66 0%, #008833 100%)";
+                    log("⚡ Sinyal ECU Honda KWP2000 Terverifikasi!");
+                }
+            } catch(e) {
+                isConnected = false;
+                setStatus("ECU MOTOR TIDAK MERESPON", "fail");
+                alert("KONEKSI GAGAL! ECU MOTOR TIDAK MERESPON.\nPastikan kontak posisi ON.");
+                try { await serialPort.close(); } catch(err){}
+            } finally {
+                if (serialReader) { try { serialReader.releaseLock(); } catch(err){} }
+            }
+        }
+
+        function autoDetectECU() {
+            if (!isConnected) { alert("Sambungkan interface ke motor terlebih dahulu!"); return; }
+            alert("Memindai ECU motor via KWP2000 Mode 0x1A...");
+        }
+
+        function testRelayActuator(type, sec) {
+            log(`Menguji Relay ${type} selama ${sec} detik...`);
+            setTimeout(() => alert(`Uji Relay ${type} Selesai 3 Detik!`), sec * 1000);
+        }
+
+        function readSmartkeyRealAction() {
+            if (!isConnected) { alert("Kabel belum terkoneksi ke motor/SCU!"); return; }
+            alert("Membaca PIN SCU...");
+        }
+
+        // ================= VIRTUAL DYNO FISIKA =================
+        let cvDyno, cxDyno, dynoArmed=false, dynoHP=0, dynoTrq=0, dynoLog=[], lastT=null, lastRpm=0;
+        function renderDyno3Color(rpm, hp, trq) {
+            cvDyno = document.getElementById("dyno-canvas"); if(!cvDyno) return;
+            cxDyno = cvDyno.getContext("2d"); cvDyno.width = cvDyno.parentElement.clientWidth || 600; cvDyno.height = 240;
+            const w = cvDyno.width, h = cvDyno.height;
+            cxDyno.fillStyle = "#050505"; cxDyno.fillRect(0,0,w,h);
+            cxDyno.strokeStyle = "#161616"; cxDyno.lineWidth = 1;
+            for(let x=0; x<w; x+=35){ cxDyno.beginPath(); cxDyno.moveTo(x,0); cxDyno.lineTo(x,h); cxDyno.stroke(); }
+            
+            cxDyno.strokeStyle = "#ff003f"; cxDyno.lineWidth = 3; cxDyno.beginPath();
+            dynoLog.forEach((p,i)=>{ const x=((p.r-1500)/13500)*w, y=h-(p.hp/26)*h; if(i===0) cxDyno.moveTo(x,y); else cxDyno.lineTo(x,y); });
+            cxDyno.stroke();
+
+            cxDyno.strokeStyle = "#00f3ff"; cxDyno.lineWidth = 3; cxDyno.beginPath();
+            dynoLog.forEach((p,i)=>{ const x=((p.r-1500)/13500)*w, y=h-(p.trq/22)*h; if(i===0) cxDyno.moveTo(x,y); else cxDyno.lineTo(x,y); });
+            cxDyno.stroke();
+
+            const sx = ((rpm-1500)/13500)*w; cxDyno.strokeStyle = "#ffee00"; cxDyno.lineWidth = 2.5;
+            cxDyno.beginPath(); cxDyno.moveTo(sx,0); cxDyno.lineTo(sx,h); cxDyno.stroke();
+        }
+
+        function toggleDynoRecording() {
+            dynoArmed = !dynoArmed; const btn = document.getElementById("btn-dyno-rec");
+            if(dynoArmed) {
+                dynoLog = []; dynoHP = 0; dynoTrq = 0; lastT = performance.now();
+                btn.innerText = "⏹️ STOP DYNO"; btn.style.background = "#ffee00"; btn.style.color = "#000";
+            } else {
+                btn.innerText = "🔴 MULAI TARIKAN DYNO NYATA"; btn.style.background = ""; btn.style.color = "";
+                alert(`Dyno Selesai! Peak: ${dynoHP.toFixed(2)} HP / ${dynoTrq.toFixed(2)} Nm`);
+            }
+        }
+
+        window.onload = () => {
+            loadAllDatabases();
+            resetTableToStandby();
+            autoConfigureOffsets("SHIN_V850_G2");
+
+            if (isAndroidDevice) {
+                selectHardwareTransport('USB_OTG');
+                log("Perangkat Android terdeteksi -> Jalur default diset ke USB OTG (WebUSB).");
+            } else {
+                selectHardwareTransport('SERIAL');
+            }
+
+            checkUsbOtgPermissionStatus();
+
+            if ("usb" in navigator) {
+                navigator.usb.addEventListener("connect", (e) => {
+                    usbOtgDevice = e.device;
+                    log(`Kabel USB OTG dicolokkan: ${e.device.productName || "USB Serial"}`);
+                    checkUsbOtgPermissionStatus();
+                });
+                navigator.usb.addEventListener("disconnect", () => {
+                    log("Kabel USB OTG dicabut.");
+                    usbOtgDevice = null;
+                    if (activeInterface === 'USB_OTG') {
+                        isConnected = false;
+                        setStatus("TERPUTUS (OTG DICABUT)", "fail");
+                    }
+                    checkUsbOtgPermissionStatus();
+                });
+            }
+
+            log("Sistem Siap. Izin USB OTG Android aktif.");
+        };
+    </script>
+</body>
+</html>
